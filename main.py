@@ -1,7 +1,8 @@
 from flask import Flask, render_template, request, jsonify
 import requests
-from db_utils import init_db, add_predefined_call, get_predefined_calls, verify_api_key, add_api_call_to_history, get_api_call_history
+from db_utils import init_db, add_predefined_call, get_predefined_calls, verify_api_key, add_api_call_to_history, get_api_call_history, get_dashboard_data
 import os
+import time
 
 app = Flask(__name__)
 
@@ -21,12 +22,16 @@ def make_request():
     body = data.get('body', {})
 
     try:
+        start_time = time.time()
         if method == 'GET':
             response = requests.get(url, headers=headers)
         elif method == 'POST':
             response = requests.post(url, headers=headers, json=body)
         else:
             return jsonify({'error': 'Unsupported method'}), 400
+        end_time = time.time()
+
+        response_time = end_time - start_time
 
         response_data = {
             'status_code': response.status_code,
@@ -35,7 +40,7 @@ def make_request():
         }
 
         # Add the API call to history
-        add_api_call_to_history(url, method, headers, body, response.status_code, dict(response.headers), response_data['body'])
+        add_api_call_to_history(url, method, headers, body, response.status_code, dict(response.headers), response_data['body'], response_time)
 
         return jsonify(response_data)
     except requests.RequestException as e:
@@ -80,6 +85,14 @@ def fetch_api_call_history():
     try:
         history = get_api_call_history()
         return jsonify(history)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/get_dashboard_data', methods=['GET'])
+def fetch_dashboard_data():
+    try:
+        dashboard_data = get_dashboard_data()
+        return jsonify(dashboard_data)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 

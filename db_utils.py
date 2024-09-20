@@ -35,6 +35,7 @@ def init_db():
             response_status INTEGER,
             response_headers JSONB,
             response_body TEXT,
+            response_time FLOAT,
             timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
@@ -76,12 +77,12 @@ def verify_api_key(api_key):
     # check the API key against a database or external service.
     return len(api_key) > 0 and api_key.startswith('valid_')
 
-def add_api_call_to_history(url, method, headers, body, response_status, response_headers, response_body):
+def add_api_call_to_history(url, method, headers, body, response_status, response_headers, response_body, response_time):
     conn = get_db_connection()
     cur = conn.cursor()
     cur.execute(
-        "INSERT INTO api_call_history (url, method, headers, body, response_status, response_headers, response_body) VALUES (%s, %s, %s, %s, %s, %s, %s)",
-        (url, method, json.dumps(headers), json.dumps(body), response_status, json.dumps(response_headers), response_body)
+        "INSERT INTO api_call_history (url, method, headers, body, response_status, response_headers, response_body, response_time) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
+        (url, method, json.dumps(headers), json.dumps(body), response_status, json.dumps(response_headers), response_body, response_time)
     )
     conn.commit()
     cur.close()
@@ -90,7 +91,7 @@ def add_api_call_to_history(url, method, headers, body, response_status, respons
 def get_api_call_history():
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute("SELECT url, method, headers, body, response_status, response_headers, response_body, timestamp FROM api_call_history ORDER BY timestamp DESC")
+    cur.execute("SELECT url, method, headers, body, response_status, response_headers, response_body, response_time, timestamp FROM api_call_history ORDER BY timestamp DESC")
     history = [
         {
             'url': row[0],
@@ -100,10 +101,41 @@ def get_api_call_history():
             'response_status': row[4],
             'response_headers': row[5],
             'response_body': row[6],
-            'timestamp': row[7].isoformat()
+            'response_time': row[7],
+            'timestamp': row[8].isoformat()
         }
         for row in cur.fetchall()
     ]
     cur.close()
     conn.close()
     return history
+
+def get_dashboard_data():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    # Get total number of API calls
+    cur.execute("SELECT COUNT(*) FROM api_call_history")
+    total_calls = cur.fetchone()[0]
+    
+    # Get average response time
+    cur.execute("SELECT AVG(response_time) FROM api_call_history")
+    avg_response_time = cur.fetchone()[0]
+    
+    # Get API usage by method
+    cur.execute("SELECT method, COUNT(*) FROM api_call_history GROUP BY method")
+    usage_by_method = dict(cur.fetchall())
+    
+    # Get top 5 most called APIs
+    cur.execute("SELECT url, COUNT(*) as call_count FROM api_call_history GROUP BY url ORDER BY call_count DESC LIMIT 5")
+    top_apis = [{'url': row[0], 'count': row[1]} for row in cur.fetchall()]
+    
+    cur.close()
+    conn.close()
+    
+    return {
+        'total_calls': total_calls,
+        'avg_response_time': avg_response_time,
+        'usage_by_method': usage_by_method,
+        'top_apis': top_apis
+    }

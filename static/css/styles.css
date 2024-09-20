@@ -13,7 +13,7 @@ body {
     padding: 20px;
 }
 
-h1, h2 {
+h1, h2, h3 {
     color: #333;
 }
 
@@ -60,4 +60,49 @@ button:hover {
 #apiKeyStatus {
     font-weight: bold;
     margin-top: 10px;
+}
+
+.history-item {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 10px;
+    margin-bottom: 10px;
+}
+
+.history-item h3 {
+    margin-top: 0;
+}
+
+.history-item details {
+    margin-top: 10px;
+}
+
+#dashboard {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.dashboard-item {
+    background-color: #fff;
+    border-radius: 5px;
+    padding: 20px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+#methodChart {
+    height: 300px;
+}
+
+#topApis {
+    list-style-type: none;
+    padding: 0;
+}
+
+#topApis li {
+    margin-bottom: 5px;
+}
+
+#refreshDashboard {
+    margin-top: 20px;
 }

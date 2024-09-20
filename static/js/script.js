@@ -5,15 +5,18 @@ document.addEventListener('DOMContentLoaded', function() {
     const predefinedCallsSelect = document.getElementById('predefinedCalls');
     const loadPredefinedCallButton = document.getElementById('loadPredefinedCall');
     const refreshHistoryButton = document.getElementById('refreshHistory');
+    const refreshDashboardButton = document.getElementById('refreshDashboard');
 
     apiCallForm.addEventListener('submit', makeApiCall);
     saveCallForm.addEventListener('submit', savePredefinedCall);
     verifyApiKeyForm.addEventListener('submit', verifyApiKey);
     loadPredefinedCallButton.addEventListener('click', loadPredefinedCall);
     refreshHistoryButton.addEventListener('click', fetchApiCallHistory);
+    refreshDashboardButton.addEventListener('click', fetchDashboardData);
 
     fetchPredefinedCalls();
     fetchApiCallHistory();
+    fetchDashboardData();
 
     function makeApiCall(e) {
         e.preventDefault();
@@ -33,6 +36,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             document.getElementById('response').textContent = JSON.stringify(data, null, 2);
             fetchApiCallHistory();
+            fetchDashboardData();
         })
         .catch(error => {
             document.getElementById('response').textContent = 'Error: ' + error.message;
@@ -125,6 +129,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 callElement.innerHTML = `
                     <h3>${call.method} ${call.url}</h3>
                     <p>Status: ${call.response_status}</p>
+                    <p>Response Time: ${call.response_time.toFixed(2)} seconds</p>
                     <p>Timestamp: ${new Date(call.timestamp).toLocaleString()}</p>
                     <details>
                         <summary>Request Details</summary>
@@ -140,6 +145,45 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .catch(error => {
             alert('Error fetching API call history: ' + error.message);
+        });
+    }
+
+    function fetchDashboardData() {
+        fetch('/get_dashboard_data')
+        .then(response => response.json())
+        .then(data => {
+            updateDashboard(data);
+        })
+        .catch(error => {
+            alert('Error fetching dashboard data: ' + error.message);
+        });
+    }
+
+    function updateDashboard(data) {
+        document.getElementById('totalCalls').textContent = data.total_calls;
+        document.getElementById('avgResponseTime').textContent = data.avg_response_time ? `${data.avg_response_time.toFixed(2)} seconds` : 'N/A';
+
+        const methodChart = new Chart(document.getElementById('methodChart'), {
+            type: 'pie',
+            data: {
+                labels: Object.keys(data.usage_by_method),
+                datasets: [{
+                    data: Object.values(data.usage_by_method),
+                    backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+
+        const topApisList = document.getElementById('topApis');
+        topApisList.innerHTML = '';
+        data.top_apis.forEach(api => {
+            const listItem = document.createElement('li');
+            listItem.textContent = `${api.url}: ${api.count} calls`;
+            topApisList.appendChild(listItem);
         });
     }
 });

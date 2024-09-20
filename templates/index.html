@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>API Call Manager</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div class="container">
@@ -65,6 +66,29 @@
             <h2>API Call History</h2>
             <button id="refreshHistory">Refresh History</button>
             <div id="historyList"></div>
+        </div>
+
+        <div class="section">
+            <h2>Dashboard</h2>
+            <div id="dashboard">
+                <div class="dashboard-item">
+                    <h3>Total API Calls</h3>
+                    <p id="totalCalls"></p>
+                </div>
+                <div class="dashboard-item">
+                    <h3>Average Response Time</h3>
+                    <p id="avgResponseTime"></p>
+                </div>
+                <div class="dashboard-item">
+                    <h3>API Usage by Method</h3>
+                    <canvas id="methodChart"></canvas>
+                </div>
+                <div class="dashboard-item">
+                    <h3>Top 5 Most Called APIs</h3>
+                    <ul id="topApis"></ul>
+                </div>
+            </div>
+            <button id="refreshDashboard">Refresh Dashboard</button>
         </div>
     </div>
 
