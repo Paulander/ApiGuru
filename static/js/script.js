@@ -123,27 +123,34 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(history => {
             const historyList = document.getElementById('historyList');
             historyList.innerHTML = '';
-            history.forEach(call => {
-                const callElement = document.createElement('div');
-                callElement.className = 'history-item';
-                callElement.innerHTML = `
-                    <h3>${call.method} ${call.url}</h3>
-                    <p>Status: ${call.response_status}</p>
-                    <p>Response Time: ${call.response_time.toFixed(2)} seconds</p>
-                    <p>Timestamp: ${new Date(call.timestamp).toLocaleString()}</p>
-                    <details>
-                        <summary>Request Details</summary>
-                        <pre>${JSON.stringify({headers: call.headers, body: call.body}, null, 2)}</pre>
-                    </details>
-                    <details>
-                        <summary>Response Details</summary>
-                        <pre>${JSON.stringify({headers: call.response_headers, body: call.response_body}, null, 2)}</pre>
-                    </details>
-                `;
-                historyList.appendChild(callElement);
-            });
+            if (history.length === 0 || (history.length === 1 && history[0].message)) {
+                const emptyMessage = document.createElement('p');
+                emptyMessage.textContent = history[0]?.message || 'No API call history available.';
+                historyList.appendChild(emptyMessage);
+            } else {
+                history.forEach(call => {
+                    const callElement = document.createElement('div');
+                    callElement.className = 'history-item';
+                    callElement.innerHTML = `
+                        <h3>${call.method} ${call.url}</h3>
+                        <p>Status: ${call.response_status}</p>
+                        <p>Response Time: ${call.response_time.toFixed(2)} seconds</p>
+                        <p>Timestamp: ${new Date(call.timestamp).toLocaleString()}</p>
+                        <details>
+                            <summary>Request Details</summary>
+                            <pre>${JSON.stringify({headers: call.headers, body: call.body}, null, 2)}</pre>
+                        </details>
+                        <details>
+                            <summary>Response Details</summary>
+                            <pre>${JSON.stringify({headers: call.response_headers, body: call.response_body}, null, 2)}</pre>
+                        </details>
+                    `;
+                    historyList.appendChild(callElement);
+                });
+            }
         })
         .catch(error => {
+            console.error('Error fetching API call history:', error);
             alert('Error fetching API call history: ' + error.message);
         });
     }

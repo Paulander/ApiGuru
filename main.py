@@ -4,6 +4,7 @@ from db_utils import init_db, add_predefined_call, get_predefined_calls, verify_
 import os
 import time
 import traceback
+import json
 
 app = Flask(__name__)
 
@@ -36,7 +37,10 @@ def make_request():
 
         content_type = response.headers.get('content-type', '')
         if 'application/json' in content_type:
-            response_body = response.json()
+            try:
+                response_body = response.json()
+            except json.JSONDecodeError:
+                response_body = response.text
         else:
             response_body = response.text
 
@@ -52,7 +56,10 @@ def make_request():
         return jsonify(response_data)
     except requests.RequestException as e:
         app.logger.error(f"Error making API request: {str(e)}")
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': f"Error making API request: {str(e)}"}), 500
+    except Exception as e:
+        app.logger.error(f"Unexpected error: {str(e)}")
+        return jsonify({'error': f"Unexpected error: {str(e)}"}), 500
 
 @app.route('/save_predefined_call', methods=['POST'])
 def save_predefined_call():
@@ -89,7 +96,7 @@ def check_api_key():
         return jsonify({'is_valid': is_valid})
     except Exception as e:
         app.logger.error(f"Error verifying API key: {str(e)}")
-        return jsonify({'error': str(e)}),eschool
+        return jsonify({'error': f"Error verifying API key: {str(e)}"}), 500
 
 @app.route('/get_api_call_history', methods=['GET'])
 def fetch_api_call_history():

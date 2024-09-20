@@ -89,24 +89,34 @@ def add_api_call_to_history(url, method, headers, body, response_status, respons
 def get_api_call_history():
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute("SELECT url, method, headers, body, response_status, response_headers, response_body, response_time, timestamp FROM api_call_history ORDER BY timestamp DESC")
-    history = [
-        {
-            'url': row[0],
-            'method': row[1],
-            'headers': row[2],
-            'body': row[3],
-            'response_status': row[4],
-            'response_headers': row[5],
-            'response_body': row[6],
-            'response_time': row[7],
-            'timestamp': row[8].isoformat()
-        }
-        for row in cur.fetchall()
-    ]
-    cur.close()
-    conn.close()
-    return history
+    try:
+        cur.execute("SELECT url, method, headers, body, response_status, response_headers, response_body, response_time, timestamp FROM api_call_history ORDER BY timestamp DESC")
+        rows = cur.fetchall()
+        
+        if not rows:
+            return [{'message': 'This is the beginning of your history'}]
+
+        history = [
+            {
+                'url': row[0],
+                'method': row[1],
+                'headers': row[2],
+                'body': row[3],
+                'response_status': row[4],
+                'response_headers': row[5],
+                'response_body': row[6],
+                'response_time': float(row[7]),
+                'timestamp': row[8].isoformat()
+            }
+            for row in rows
+        ]
+        return history
+    except Exception as e:
+        print(f"Error in get_api_call_history: {str(e)}")
+        return [{'message': f'Error fetching history: {str(e)}'}]
+    finally:
+        cur.close()
+        conn.close()
 
 def get_dashboard_data():
     conn = get_db_connection()
