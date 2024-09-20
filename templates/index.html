@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Call Manager</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>API Call Manager</h1>
+        
+        <div class="section">
+            <h2>Make API Call</h2>
+            <form id="apiCallForm">
+                <input type="text" id="url" placeholder="URL" required>
+                <select id="method">
+                    <option value="GET">GET</option>
+                    <option value="POST">POST</option>
+                </select>
+                <textarea id="headers" placeholder="Headers (JSON)"></textarea>
+                <textarea id="body" placeholder="Body (JSON)"></textarea>
+                <button type="submit">Send Request</button>
+            </form>
+        </div>
+
+        <div class="section">
+            <h2>Response</h2>
+            <pre id="response"></pre>
+        </div>
+
+        <div class="section">
+            <h2>Save Predefined Call</h2>
+            <form id="saveCallForm">
+                <input type="text" id="callName" placeholder="Call Name" required>
+                <input type="text" id="saveUrl" placeholder="URL" required>
+                <select id="saveMethod">
+                    <option value="GET">GET</option>
+                    <option value="POST">POST</option>
+                </select>
+                <textarea id="saveHeaders" placeholder="Headers (JSON)"></textarea>
+                <textarea id="saveBody" placeholder="Body (JSON)"></textarea>
+                <button type="submit">Save Call</button>
+            </form>
+        </div>
+
+        <div class="section">
+            <h2>Predefined Calls</h2>
+            <select id="predefinedCalls">
+                <option value="">Select a predefined call</option>
+            </select>
+            <button id="loadPredefinedCall">Load</button>
+        </div>
+
+        <div class="section">
+            <h2>Verify API Key</h2>
+            <form id="verifyApiKeyForm">
+                <input type="text" id="apiKey" placeholder="API Key" required>
+                <button type="submit">Verify</button>
+            </form>
+            <p id="apiKeyStatus"></p>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
