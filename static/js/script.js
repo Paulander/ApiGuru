@@ -155,35 +155,58 @@ document.addEventListener('DOMContentLoaded', function() {
             updateDashboard(data);
         })
         .catch(error => {
+            console.error('Error fetching dashboard data:', error);
             alert('Error fetching dashboard data: ' + error.message);
         });
     }
 
     function updateDashboard(data) {
-        document.getElementById('totalCalls').textContent = data.total_calls;
-        document.getElementById('avgResponseTime').textContent = data.avg_response_time ? `${data.avg_response_time.toFixed(2)} seconds` : 'N/A';
+        try {
+            document.getElementById('totalCalls').textContent = data.total_calls || 'N/A';
+            document.getElementById('avgResponseTime').textContent = data.avg_response_time ? `${data.avg_response_time.toFixed(2)} seconds` : 'N/A';
 
-        const methodChart = new Chart(document.getElementById('methodChart'), {
-            type: 'pie',
-            data: {
-                labels: Object.keys(data.usage_by_method),
-                datasets: [{
-                    data: Object.values(data.usage_by_method),
-                    backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF']
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false
+            const methodChartCanvas = document.getElementById('methodChart');
+            if (methodChartCanvas.chart) {
+                methodChartCanvas.chart.destroy();
             }
-        });
 
-        const topApisList = document.getElementById('topApis');
-        topApisList.innerHTML = '';
-        data.top_apis.forEach(api => {
-            const listItem = document.createElement('li');
-            listItem.textContent = `${api.url}: ${api.count} calls`;
-            topApisList.appendChild(listItem);
-        });
+            if (Object.keys(data.usage_by_method).length > 0) {
+                methodChartCanvas.chart = new Chart(methodChartCanvas, {
+                    type: 'pie',
+                    data: {
+                        labels: Object.keys(data.usage_by_method),
+                        datasets: [{
+                            data: Object.values(data.usage_by_method),
+                            backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false
+                    }
+                });
+            } else {
+                methodChartCanvas.getContext('2d').clearRect(0, 0, methodChartCanvas.width, methodChartCanvas.height);
+                methodChartCanvas.getContext('2d').font = '14px Arial';
+                methodChartCanvas.getContext('2d').fillText('No data available', 10, 50);
+            }
+
+            const topApisList = document.getElementById('topApis');
+            topApisList.innerHTML = '';
+            if (data.top_apis && data.top_apis.length > 0) {
+                data.top_apis.forEach(api => {
+                    const listItem = document.createElement('li');
+                    listItem.textContent = `${api.url}: ${api.count} calls`;
+                    topApisList.appendChild(listItem);
+                });
+            } else {
+                const listItem = document.createElement('li');
+                listItem.textContent = 'No data available';
+                topApisList.appendChild(listItem);
+            }
+        } catch (error) {
+            console.error('Error updating dashboard:', error);
+            alert('Error updating dashboard: ' + error.message);
+        }
     }
 });

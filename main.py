@@ -3,6 +3,7 @@ import requests
 from db_utils import init_db, add_predefined_call, get_predefined_calls, verify_api_key, add_api_call_to_history, get_api_call_history, get_dashboard_data
 import os
 import time
+import traceback
 
 app = Flask(__name__)
 
@@ -59,6 +60,7 @@ def save_predefined_call():
         add_predefined_call(name, url, method, headers, body)
         return jsonify({'message': 'Predefined call saved successfully'})
     except Exception as e:
+        app.logger.error(f"Error saving predefined call: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/get_predefined_calls', methods=['GET'])
@@ -67,6 +69,7 @@ def fetch_predefined_calls():
         calls = get_predefined_calls()
         return jsonify(calls)
     except Exception as e:
+        app.logger.error(f"Error fetching predefined calls: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/verify_api_key', methods=['POST'])
@@ -78,6 +81,7 @@ def check_api_key():
         is_valid = verify_api_key(api_key)
         return jsonify({'is_valid': is_valid})
     except Exception as e:
+        app.logger.error(f"Error verifying API key: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/get_api_call_history', methods=['GET'])
@@ -86,6 +90,7 @@ def fetch_api_call_history():
         history = get_api_call_history()
         return jsonify(history)
     except Exception as e:
+        app.logger.error(f"Error fetching API call history: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/get_dashboard_data', methods=['GET'])
@@ -95,6 +100,7 @@ def fetch_dashboard_data():
         return jsonify(dashboard_data)
     except Exception as e:
         app.logger.error(f"Error fetching dashboard data: {str(e)}")
+        app.logger.error(f"Traceback: {traceback.format_exc()}")
         return jsonify({'error': 'An error occurred while fetching dashboard data', 'details': str(e)}), 500
 
 if __name__ == '__main__':

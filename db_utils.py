@@ -116,19 +116,19 @@ def get_dashboard_data():
     
     # Get total number of API calls
     cur.execute("SELECT COUNT(*) FROM api_call_history")
-    total_calls = cur.fetchone()[0]
+    total_calls = cur.fetchone()[0] or 0
     
     # Get average response time
     cur.execute("SELECT AVG(response_time) FROM api_call_history")
-    avg_response_time = cur.fetchone()[0]
+    avg_response_time = cur.fetchone()[0] or 0
     
     # Get API usage by method
     cur.execute("SELECT method, COUNT(*) FROM api_call_history GROUP BY method")
-    usage_by_method = dict(cur.fetchall())
+    usage_by_method = dict(cur.fetchall()) or {}
     
     # Get top 5 most called APIs
     cur.execute("SELECT url, COUNT(*) as call_count FROM api_call_history GROUP BY url ORDER BY call_count DESC LIMIT 5")
-    top_apis = [{'url': row[0], 'count': row[1]} for row in cur.fetchall()]
+    top_apis = [{'url': row[0], 'count': row[1]} for row in cur.fetchall()] or []
     
     cur.close()
     conn.close()
