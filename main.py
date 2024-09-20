@@ -112,8 +112,8 @@ def fetch_dashboard_data():
     try:
         dashboard_data = get_dashboard_data()
         if dashboard_data is None:
-            app.logger.error("No dashboard data found")
-            return jsonify({'error': 'No dashboard data available'}), 404
+            app.logger.error("No dashboard data found or error occurred while fetching data")
+            return jsonify({'error': 'Unable to fetch dashboard data. Please check the logs for more information.'}), 500
         return jsonify(dashboard_data)
     except Exception as e:
         app.logger.error(f"Error fetching dashboard data: {str(e)}")

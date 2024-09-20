@@ -39,6 +39,18 @@ def init_db():
             timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
+    
+    # Add response_time column if it doesn't exist
+    cur.execute('''
+        DO $$
+        BEGIN
+            IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                           WHERE table_name='api_call_history' AND column_name='response_time') THEN
+                ALTER TABLE api_call_history ADD COLUMN response_time FLOAT;
+            END IF;
+        END $$;
+    ''')
+    
     conn.commit()
     cur.close()
     conn.close()
@@ -78,19 +90,29 @@ def verify_api_key(api_key):
 def add_api_call_to_history(url, method, headers, body, response_status, response_headers, response_body, response_time):
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute(
-        "INSERT INTO api_call_history (url, method, headers, body, response_status, response_headers, response_body, response_time) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
-        (url, method, json.dumps(headers), json.dumps(body), response_status, json.dumps(response_headers), response_body, response_time)
-    )
-    conn.commit()
-    cur.close()
-    conn.close()
+    try:
+        cur.execute(
+            "INSERT INTO api_call_history (url, method, headers, body, response_status, response_headers, response_body, response_time) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
+            (url, method, json.dumps(headers), json.dumps(body), response_status, json.dumps(response_headers), response_body, response_time)
+        )
+        conn.commit()
+    except Exception as e:
+        print(f"Error in add_api_call_to_history: {str(e)}")
+        conn.rollback()
+    finally:
+        cur.close()
+        conn.close()
 
 def get_api_call_history():
     conn = get_db_connection()
     cur = conn.cursor()
     try:
-        cur.execute("SELECT url, method, headers, body, response_status, response_headers, response_body, response_time, timestamp FROM api_call_history ORDER BY timestamp DESC")
+        cur.execute("""
+            SELECT url, method, headers, body, response_status, response_headers, response_body, 
+                   COALESCE(response_time, 0) as response_time, timestamp 
+            FROM api_call_history 
+            ORDER BY timestamp DESC
+        """)
         rows = cur.fetchall()
         
         if not rows:
@@ -126,7 +148,7 @@ def get_dashboard_data():
         cur.execute("SELECT COUNT(*) FROM api_call_history")
         total_calls = cur.fetchone()[0] if cur.rowcount > 0 else 0
         
-        cur.execute("SELECT AVG(response_time) FROM api_call_history")
+        cur.execute("SELECT AVG(COALESCE(response_time, 0)) FROM api_call_history")
         avg_response_time = cur.fetchone()[0] if cur.rowcount > 0 else 0
         
         cur.execute("SELECT method, COUNT(*) FROM api_call_history GROUP BY method")
