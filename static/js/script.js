@@ -162,15 +162,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function updateDashboard(data) {
         try {
-            document.getElementById('totalCalls').textContent = data.total_calls || 'N/A';
-            document.getElementById('avgResponseTime').textContent = data.avg_response_time ? `${data.avg_response_time.toFixed(2)} seconds` : 'N/A';
+            document.getElementById('totalCalls').textContent = data.total_calls !== undefined ? data.total_calls : 'N/A';
+            document.getElementById('avgResponseTime').textContent = data.avg_response_time !== undefined ? `${data.avg_response_time.toFixed(2)} seconds` : 'N/A';
 
             const methodChartCanvas = document.getElementById('methodChart');
             if (methodChartCanvas.chart) {
                 methodChartCanvas.chart.destroy();
             }
 
-            if (Object.keys(data.usage_by_method).length > 0) {
+            if (data.usage_by_method && Object.keys(data.usage_by_method).length > 0) {
                 methodChartCanvas.chart = new Chart(methodChartCanvas, {
                     type: 'pie',
                     data: {
@@ -196,7 +196,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.top_apis && data.top_apis.length > 0) {
                 data.top_apis.forEach(api => {
                     const listItem = document.createElement('li');
-                    listItem.textContent = `${api.url}: ${api.count} calls`;
+                    listItem.textContent = `${api.url || 'Unknown URL'}: ${api.count || 0} calls`;
                     topApisList.appendChild(listItem);
                 });
             } else {

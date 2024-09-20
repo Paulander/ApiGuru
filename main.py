@@ -34,17 +34,24 @@ def make_request():
 
         response_time = end_time - start_time
 
+        content_type = response.headers.get('content-type', '')
+        if 'application/json' in content_type:
+            response_body = response.json()
+        else:
+            response_body = response.text
+
         response_data = {
             'status_code': response.status_code,
             'headers': dict(response.headers),
-            'body': response.json() if response.headers.get('content-type') == 'application/json' else response.text
+            'body': response_body
         }
 
         # Add the API call to history
-        add_api_call_to_history(url, method, headers, body, response.status_code, dict(response.headers), response_data['body'], response_time)
+        add_api_call_to_history(url, method, headers, body, response.status_code, dict(response.headers), str(response_body), response_time)
 
         return jsonify(response_data)
     except requests.RequestException as e:
+        app.logger.error(f"Error making API request: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/save_predefined_call', methods=['POST'])
@@ -82,7 +89,7 @@ def check_api_key():
         return jsonify({'is_valid': is_valid})
     except Exception as e:
         app.logger.error(f"Error verifying API key: {str(e)}")
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': str(e)}),eschool
 
 @app.route('/get_api_call_history', methods=['GET'])
 def fetch_api_call_history():
@@ -97,6 +104,9 @@ def fetch_api_call_history():
 def fetch_dashboard_data():
     try:
         dashboard_data = get_dashboard_data()
+        if dashboard_data is None:
+            app.logger.error("No dashboard data found")
+            return jsonify({'error': 'No dashboard data available'}), 404
         return jsonify(dashboard_data)
     except Exception as e:
         app.logger.error(f"Error fetching dashboard data: {str(e)}")
