@@ -60,6 +60,12 @@
             </form>
             <p id="apiKeyStatus"></p>
         </div>
+
+        <div class="section">
+            <h2>API Call History</h2>
+            <button id="refreshHistory">Refresh History</button>
+            <div id="historyList"></div>
+        </div>
     </div>
 
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>

@@ -4,13 +4,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const verifyApiKeyForm = document.getElementById('verifyApiKeyForm');
     const predefinedCallsSelect = document.getElementById('predefinedCalls');
     const loadPredefinedCallButton = document.getElementById('loadPredefinedCall');
+    const refreshHistoryButton = document.getElementById('refreshHistory');
 
     apiCallForm.addEventListener('submit', makeApiCall);
     saveCallForm.addEventListener('submit', savePredefinedCall);
     verifyApiKeyForm.addEventListener('submit', verifyApiKey);
     loadPredefinedCallButton.addEventListener('click', loadPredefinedCall);
+    refreshHistoryButton.addEventListener('click', fetchApiCallHistory);
 
     fetchPredefinedCalls();
+    fetchApiCallHistory();
 
     function makeApiCall(e) {
         e.preventDefault();
@@ -29,6 +32,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             document.getElementById('response').textContent = JSON.stringify(data, null, 2);
+            fetchApiCallHistory();
         })
         .catch(error => {
             document.getElementById('response').textContent = 'Error: ' + error.message;
@@ -107,5 +111,35 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('headers').value = JSON.stringify(selectedCall.headers, null, 2);
             document.getElementById('body').value = JSON.stringify(selectedCall.body, null, 2);
         }
+    }
+
+    function fetchApiCallHistory() {
+        fetch('/get_api_call_history')
+        .then(response => response.json())
+        .then(history => {
+            const historyList = document.getElementById('historyList');
+            historyList.innerHTML = '';
+            history.forEach(call => {
+                const callElement = document.createElement('div');
+                callElement.className = 'history-item';
+                callElement.innerHTML = `
+                    <h3>${call.method} ${call.url}</h3>
+                    <p>Status: ${call.response_status}</p>
+                    <p>Timestamp: ${new Date(call.timestamp).toLocaleString()}</p>
+                    <details>
+                        <summary>Request Details</summary>
+                        <pre>${JSON.stringify({headers: call.headers, body: call.body}, null, 2)}</pre>
+                    </details>
+                    <details>
+                        <summary>Response Details</summary>
+                        <pre>${JSON.stringify({headers: call.response_headers, body: call.response_body}, null, 2)}</pre>
+                    </details>
+                `;
+                historyList.appendChild(callElement);
+            });
+        })
+        .catch(error => {
+            alert('Error fetching API call history: ' + error.message);
+        });
     }
 });

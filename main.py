@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, jsonify
 import requests
-from db_utils import init_db, add_predefined_call, get_predefined_calls, verify_api_key
+from db_utils import init_db, add_predefined_call, get_predefined_calls, verify_api_key, add_api_call_to_history, get_api_call_history
 import os
 
 app = Flask(__name__)
@@ -28,11 +28,16 @@ def make_request():
         else:
             return jsonify({'error': 'Unsupported method'}), 400
 
-        return jsonify({
+        response_data = {
             'status_code': response.status_code,
             'headers': dict(response.headers),
             'body': response.json() if response.headers.get('content-type') == 'application/json' else response.text
-        })
+        }
+
+        # Add the API call to history
+        add_api_call_to_history(url, method, headers, body, response.status_code, dict(response.headers), response_data['body'])
+
+        return jsonify(response_data)
     except requests.RequestException as e:
         return jsonify({'error': str(e)}), 500
 
@@ -67,6 +72,14 @@ def check_api_key():
     try:
         is_valid = verify_api_key(api_key)
         return jsonify({'is_valid': is_valid})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/get_api_call_history', methods=['GET'])
+def fetch_api_call_history():
+    try:
+        history = get_api_call_history()
+        return jsonify(history)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
