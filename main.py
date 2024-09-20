@@ -94,7 +94,8 @@ def fetch_dashboard_data():
         dashboard_data = get_dashboard_data()
         return jsonify(dashboard_data)
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        app.logger.error(f"Error fetching dashboard data: {str(e)}")
+        return jsonify({'error': 'An error occurred while fetching dashboard data', 'details': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
