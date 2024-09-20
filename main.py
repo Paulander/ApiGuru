@@ -52,7 +52,7 @@ def make_request():
         }
 
         # Add the API call to history
-        add_api_call_to_history(url, method, headers, body, response.status_code, dict(response.headers), str(response_body), response_time)
+        add_api_call_to_history(url, method, json.dumps(headers), json.dumps(body), response.status_code, json.dumps(dict(response.headers)), json.dumps(response_body), response_time)
 
         return jsonify(response_data)
     except requests.RequestException as e:
@@ -68,11 +68,11 @@ def save_predefined_call():
     name = data.get('name')
     url = data.get('url')
     method = data.get('method')
-    headers = data.get('headers', {})
-    body = data.get('body', {})
+    headers = data.get('headers', '{}')
+    body = data.get('body', '{}')
 
     try:
-        add_predefined_call(name, url, method, headers, body)
+        add_predefined_call(name, url, method, headers, json.dumps(body))
         return jsonify({'message': 'Predefined call saved successfully'})
     except Exception as e:
         app.logger.error(f"Error saving predefined call: {str(e)}")

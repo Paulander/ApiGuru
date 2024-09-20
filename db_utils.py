@@ -21,7 +21,7 @@ def init_db():
             name TEXT NOT NULL,
             url TEXT NOT NULL,
             method TEXT NOT NULL,
-            headers JSONB,
+            headers TEXT,
             body JSONB
         )
     ''')
@@ -30,10 +30,10 @@ def init_db():
             id SERIAL PRIMARY KEY,
             url TEXT NOT NULL,
             method TEXT NOT NULL,
-            headers JSONB,
+            headers TEXT,
             body JSONB,
             response_status INTEGER,
-            response_headers JSONB,
+            response_headers TEXT,
             response_body TEXT,
             response_time FLOAT,
             timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -60,7 +60,7 @@ def add_predefined_call(name, url, method, headers, body):
     cur = conn.cursor()
     cur.execute(
         "INSERT INTO predefined_calls (name, url, method, headers, body) VALUES (%s, %s, %s, %s, %s)",
-        (name, url, method, json.dumps(headers), json.dumps(body))
+        (name, url, method, headers, body)
     )
     conn.commit()
     cur.close()
@@ -93,7 +93,7 @@ def add_api_call_to_history(url, method, headers, body, response_status, respons
     try:
         cur.execute(
             "INSERT INTO api_call_history (url, method, headers, body, response_status, response_headers, response_body, response_time) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
-            (url, method, json.dumps(headers), json.dumps(body), response_status, json.dumps(response_headers), response_body, response_time)
+            (url, method, headers, body, response_status, response_headers, response_body, response_time)
         )
         conn.commit()
     except Exception as e:
@@ -122,11 +122,11 @@ def get_api_call_history():
             {
                 'url': row[0],
                 'method': row[1],
-                'headers': row[2],
-                'body': row[3],
+                'headers': json.loads(row[2]) if row[2] else {},
+                'body': json.loads(row[3]) if row[3] else {},
                 'response_status': row[4],
-                'response_headers': row[5],
-                'response_body': row[6],
+                'response_headers': json.loads(row[5]) if row[5] else {},
+                'response_body': json.loads(row[6]) if row[6] else {},
                 'response_time': float(row[7]),
                 'timestamp': row[8].isoformat()
             }
@@ -183,7 +183,7 @@ def export_predefined_calls():
                 'url': row[1],
                 'method': row[2],
                 'headers': row[3],
-                'body': row[4]
+                'body': json.loads(row[4]) if row[4] else {}
             }
             for row in cur.fetchall()
         ]
@@ -202,7 +202,7 @@ def import_predefined_calls(calls):
         for call in calls:
             cur.execute(
                 "INSERT INTO predefined_calls (name, url, method, headers, body) VALUES (%s, %s, %s, %s, %s)",
-                (call['name'], call['url'], call['method'], json.dumps(call['headers']), json.dumps(call['body']))
+                (call['name'], call['url'], call['method'], call['headers'], json.dumps(call['body']))
             )
         conn.commit()
     except Exception as e:

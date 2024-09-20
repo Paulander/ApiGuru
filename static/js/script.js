@@ -28,8 +28,8 @@ document.addEventListener('DOMContentLoaded', function() {
         e.preventDefault();
         const url = document.getElementById('url').value;
         const method = document.getElementById('method').value;
-        const headers = JSON.parse(document.getElementById('headers').value || '{}');
-        const body = JSON.parse(document.getElementById('body').value || '{}');
+        const headers = parseHeaders(document.getElementById('headers').value);
+        const body = parseJSON(document.getElementById('body').value);
 
         fetch('/make_request', {
             method: 'POST',
@@ -54,8 +54,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const name = document.getElementById('callName').value;
         const url = document.getElementById('saveUrl').value;
         const method = document.getElementById('saveMethod').value;
-        const headers = JSON.parse(document.getElementById('saveHeaders').value || '{}');
-        const body = JSON.parse(document.getElementById('saveBody').value || '{}');
+        const headers = document.getElementById('saveHeaders').value;
+        const body = parseJSON(document.getElementById('saveBody').value);
 
         fetch('/save_predefined_call', {
             method: 'POST',
@@ -118,7 +118,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (selectedCall) {
             document.getElementById('url').value = selectedCall.url;
             document.getElementById('method').value = selectedCall.method;
-            document.getElementById('headers').value = JSON.stringify(selectedCall.headers, null, 2);
+            document.getElementById('headers').value = selectedCall.headers;
             document.getElementById('body').value = JSON.stringify(selectedCall.body, null, 2);
         }
     }
@@ -261,6 +261,32 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error('Error importing predefined calls:', error);
                 alert('Error importing predefined calls: ' + error.message);
             });
+        }
+    }
+
+    function parseHeaders(headersString) {
+        try {
+            // First, try to parse as JSON
+            return JSON.parse(headersString);
+        } catch (e) {
+            // If JSON parsing fails, try to parse as key-value pairs
+            const headers = {};
+            headersString.split('\n').forEach(line => {
+                const [key, value] = line.split(':').map(item => item.trim());
+                if (key && value) {
+                    headers[key] = value;
+                }
+            });
+            return headers;
+        }
+    }
+
+    function parseJSON(jsonString) {
+        try {
+            return JSON.parse(jsonString);
+        } catch (e) {
+            console.error('Error parsing JSON:', e);
+            return {};
         }
     }
 });
