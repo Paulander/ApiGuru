@@ -1,10 +1,11 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, send_file
 import requests
-from db_utils import init_db, add_predefined_call, get_predefined_calls, verify_api_key, add_api_call_to_history, get_api_call_history, get_dashboard_data
+from db_utils import init_db, add_predefined_call, get_predefined_calls, verify_api_key, add_api_call_to_history, get_api_call_history, get_dashboard_data, export_predefined_calls, import_predefined_calls
 import os
 import time
 import traceback
 import json
+import tempfile
 
 app = Flask(__name__)
 
@@ -119,6 +120,40 @@ def fetch_dashboard_data():
         app.logger.error(f"Error fetching dashboard data: {str(e)}")
         app.logger.error(f"Traceback: {traceback.format_exc()}")
         return jsonify({'error': 'An error occurred while fetching dashboard data', 'details': str(e)}), 500
+
+@app.route('/export_predefined_calls', methods=['GET'])
+def export_calls():
+    try:
+        calls = export_predefined_calls()
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as temp_file:
+            json.dump(calls, temp_file, indent=2)
+            temp_file_path = temp_file.name
+
+        return send_file(temp_file_path, as_attachment=True, download_name='predefined_calls.json')
+    except Exception as e:
+        app.logger.error(f"Error exporting predefined calls: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/import_predefined_calls', methods=['POST'])
+def import_calls():
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file part'}), 400
+    
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'No selected file'}), 400
+    
+    if file and file.filename.endswith('.json'):
+        try:
+            content = file.read()
+            calls = json.loads(content)
+            import_predefined_calls(calls)
+            return jsonify({'message': 'Predefined calls imported successfully'})
+        except Exception as e:
+            app.logger.error(f"Error importing predefined calls: {str(e)}")
+            return jsonify({'error': str(e)}), 500
+    else:
+        return jsonify({'error': 'Invalid file format. Please upload a JSON file.'}), 400
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)

@@ -171,3 +171,43 @@ def get_dashboard_data():
     finally:
         cur.close()
         conn.close()
+
+def export_predefined_calls():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute("SELECT name, url, method, headers, body FROM predefined_calls")
+        calls = [
+            {
+                'name': row[0],
+                'url': row[1],
+                'method': row[2],
+                'headers': row[3],
+                'body': row[4]
+            }
+            for row in cur.fetchall()
+        ]
+        return calls
+    except Exception as e:
+        print(f"Error exporting predefined calls: {str(e)}")
+        return []
+    finally:
+        cur.close()
+        conn.close()
+
+def import_predefined_calls(calls):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        for call in calls:
+            cur.execute(
+                "INSERT INTO predefined_calls (name, url, method, headers, body) VALUES (%s, %s, %s, %s, %s)",
+                (call['name'], call['url'], call['method'], json.dumps(call['headers']), json.dumps(call['body']))
+            )
+        conn.commit()
+    except Exception as e:
+        print(f"Error importing predefined calls: {str(e)}")
+        conn.rollback()
+    finally:
+        cur.close()
+        conn.close()

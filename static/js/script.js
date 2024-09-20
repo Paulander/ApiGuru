@@ -6,6 +6,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const loadPredefinedCallButton = document.getElementById('loadPredefinedCall');
     const refreshHistoryButton = document.getElementById('refreshHistory');
     const refreshDashboardButton = document.getElementById('refreshDashboard');
+    const exportPredefinedCallsButton = document.getElementById('exportPredefinedCalls');
+    const importPredefinedCallsButton = document.getElementById('importPredefinedCalls');
+    const importPredefinedCallsFile = document.getElementById('importPredefinedCallsFile');
 
     apiCallForm.addEventListener('submit', makeApiCall);
     saveCallForm.addEventListener('submit', savePredefinedCall);
@@ -13,6 +16,9 @@ document.addEventListener('DOMContentLoaded', function() {
     loadPredefinedCallButton.addEventListener('click', loadPredefinedCall);
     refreshHistoryButton.addEventListener('click', fetchApiCallHistory);
     refreshDashboardButton.addEventListener('click', fetchDashboardData);
+    exportPredefinedCallsButton.addEventListener('click', exportPredefinedCalls);
+    importPredefinedCallsButton.addEventListener('click', () => importPredefinedCallsFile.click());
+    importPredefinedCallsFile.addEventListener('change', importPredefinedCalls);
 
     fetchPredefinedCalls();
     fetchApiCallHistory();
@@ -214,6 +220,47 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch (error) {
             console.error('Error updating dashboard:', error);
             alert('Error updating dashboard: ' + error.message);
+        }
+    }
+
+    function exportPredefinedCalls() {
+        fetch('/export_predefined_calls')
+        .then(response => response.blob())
+        .then(blob => {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = 'predefined_calls.json';
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+        })
+        .catch(error => {
+            console.error('Error exporting predefined calls:', error);
+            alert('Error exporting predefined calls: ' + error.message);
+        });
+    }
+
+    function importPredefinedCalls(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            fetch('/import_predefined_calls', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                fetchPredefinedCalls();
+            })
+            .catch(error => {
+                console.error('Error importing predefined calls:', error);
+                alert('Error importing predefined calls: ' + error.message);
+            });
         }
     }
 });
